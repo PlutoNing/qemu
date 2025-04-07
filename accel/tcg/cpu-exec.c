@@ -217,6 +217,7 @@ static TranslationBlock *tb_htable_lookup(CPUState *cpu, vaddr pc,
 }
 
 /**
+tcg执行前尝试寻找已经翻译好的tb
  * tb_lookup:
  * @cpu: CPU that will execute the returned translation block
  * @pc: guest PC
@@ -427,7 +428,9 @@ static vaddr log_pc(CPUState *cpu, const TranslationBlock *tb)
     }
 }
 
-/* Execute a TB, and fix up the CPU state afterwards if necessary */
+/* 
+执行tb
+Execute a TB, and fix up the CPU state afterwards if necessary */
 /*
  * Disable CFI checks.
  * TCG creates binary blobs at runtime, with the transformed code.
@@ -449,6 +452,7 @@ cpu_tb_exec(CPUState *cpu, TranslationBlock *itb, int *tb_exit)
     }
 
     qemu_thread_jit_execute();
+    // 执行代码
     ret = tcg_qemu_tb_exec(cpu_env(cpu), tb_ptr);
     cpu->neg.can_do_io = true;
     qemu_plugin_disable_mem_helpers(cpu);
@@ -685,7 +689,9 @@ static inline bool cpu_handle_halt(CPUState *cpu)
 
     return false;
 }
-
+/* 
+处理断点相关
+*/
 static inline void cpu_handle_debug_exception(CPUState *cpu)
 {
     const TCGCPUOps *tcg_ops = cpu->cc->tcg_ops;
@@ -701,7 +707,9 @@ static inline void cpu_handle_debug_exception(CPUState *cpu)
         tcg_ops->debug_excp_handler(cpu);
     }
 }
-
+/* 
+断点的时候The exception_index is set to EXCP_DEBUG which has a special meaning and
+ we go back to the main cpu execution loop, where cpu_handle_exception is called and does: */
 static inline bool cpu_handle_exception(CPUState *cpu, int *ret)
 {
     if (cpu->exception_index < 0) {
@@ -720,6 +728,7 @@ static inline bool cpu_handle_exception(CPUState *cpu, int *ret)
         /* exit request from the cpu execution loop */
         *ret = cpu->exception_index;
         if (*ret == EXCP_DEBUG) {
+            /* 好像是处理断点的情况 */
             cpu_handle_debug_exception(cpu);
         }
         cpu->exception_index = -1;
@@ -893,12 +902,19 @@ static inline bool cpu_handle_interrupt(CPUState *cpu,
 
     return false;
 }
-
+/* 
+qemu执行tb的函数
+When a TB is available, QEMU runs it with cpu_loop_exec_tb which in short 
+calls cpu_tb_exec and then tcg_qemu_tb_exec. At this point the target (VM) 
+code has been translated to host code, QEMU can run it directly on the host 
+CPU.
+*/
 static inline void cpu_loop_exec_tb(CPUState *cpu, TranslationBlock *tb,
                                     vaddr pc, TranslationBlock **last_tb,
                                     int *tb_exit)
 {
     trace_exec_tb(tb, pc);
+    // 执行tb
     tb = cpu_tb_exec(cpu, tb, tb_exit);
     if (*tb_exit != TB_EXIT_REQUESTED) {
         *last_tb = tb;
@@ -977,13 +993,14 @@ cpu_exec_loop(CPUState *cpu, SyncClocks *sc)
             if (check_for_breakpoints(cpu, pc, &cflags)) {
                 break;
             }
-
+            // 尝试寻找已经翻译好的tb
             tb = tb_lookup(cpu, pc, cs_base, flags, cflags);
             if (tb == NULL) {
                 CPUJumpCache *jc;
                 uint32_t h;
 
                 mmap_lock();
+                // 没找到翻译好的,这里生成
                 tb = tb_gen_code(cpu, pc, cs_base, flags, cflags);
                 mmap_unlock();
 
@@ -1012,7 +1029,7 @@ cpu_exec_loop(CPUState *cpu, SyncClocks *sc)
             if (last_tb) {
                 tb_add_jump(last_tb, tb_exit, tb);
             }
-
+            // 现在已经有tb了,开始执行
             cpu_loop_exec_tb(cpu, tb, pc, &last_tb, &tb_exit);
 
             /* Try to align the host and virtual clocks
@@ -1022,17 +1039,19 @@ cpu_exec_loop(CPUState *cpu, SyncClocks *sc)
     }
     return ret;
 }
-
+/* 执行cpu */
 static int cpu_exec_setjmp(CPUState *cpu, SyncClocks *sc)
 {
-    /* Prepare setjmp context for exception handling. */
+    /* Prepare setjmp context for exception handling.
+    通过jmp机制方便的执行异常处理
+    */
     if (unlikely(sigsetjmp(cpu->jmp_env, 0) != 0)) {
         cpu_exec_longjmp_cleanup(cpu);
     }
 
     return cpu_exec_loop(cpu, sc);
 }
-
+/* 执行指令 */
 int cpu_exec(CPUState *cpu)
 {
     int ret;
@@ -1055,7 +1074,7 @@ int cpu_exec(CPUState *cpu)
      * advance/delay we gain here, we try to fix it next time.
      */
     init_delay_params(&sc, cpu);
-
+    // 这里执行
     ret = cpu_exec_setjmp(cpu, &sc);
 
     cpu_exec_exit(cpu);

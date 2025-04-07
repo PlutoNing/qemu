@@ -23,7 +23,10 @@
 #include "cpu-common.h"
 #include "qemu/rcu.h"
 #include "exec/ramlist.h"
-
+/* 
+All RAMBlocks are in a global list RAMList object called ram_list.
+ ram_list holds the RAMBlocks and also the dirty memory bitmaps.
+*/
 struct RAMBlock {
     struct rcu_head rcu;
     struct MemoryRegion *mr;

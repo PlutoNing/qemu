@@ -41,6 +41,7 @@ bool translator_io_start(DisasContextBase *db)
     return true;
 }
 
+/* It injects instructions to check for instruction count and an exit condition. */
 static TCGOp *gen_tb_start(DisasContextBase *db, uint32_t cflags)
 {
     TCGv_i32 count = NULL;
@@ -86,6 +87,7 @@ static TCGOp *gen_tb_start(DisasContextBase *db, uint32_t cflags)
     return icount_start_insn;
 }
 
+/* It injects instructions to exit from the TB (tcg_gen_exit_tb). */
 static void gen_tb_end(const TranslationBlock *tb, uint32_t cflags,
                        TCGOp *icount_start_insn, int num_insns)
 {
@@ -146,7 +148,8 @@ void translator_loop(CPUState *cpu, TranslationBlock *tb, int *max_insns,
     ops->init_disas_context(db, cpu);
     tcg_debug_assert(db->is_jmp == DISAS_NEXT);  /* no early exit */
 
-    /* Start translating.  */
+    /* Start translating.
+    The generic TB prologue is generated from gen_tb_start  */
     icount_start_insn = gen_tb_start(db, cflags);
     ops->tb_start(db, cpu);
     tcg_debug_assert(db->is_jmp == DISAS_NEXT);  /* no early exit */
@@ -203,6 +206,8 @@ void translator_loop(CPUState *cpu, TranslationBlock *tb, int *max_insns,
 
     /* Emit code to exit the TB, as indicated by db->is_jmp.  */
     ops->tb_stop(db, cpu);
+    /* The epilogue is generated from gen_tb_end. It injects instructions 
+    to exit from the TB (tcg_gen_exit_tb). */
     gen_tb_end(tb, cflags, icount_start_insn, db->num_insns);
 
     /*

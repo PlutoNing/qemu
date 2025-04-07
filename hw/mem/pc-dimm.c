@@ -17,7 +17,15 @@
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, see <http://www.gnu.org/licenses/>
  */
+/* 
+The "pc-dimm" device (hw/mem/pc-dimm.c) models a DIMM. 
+Memory is hotplugged by creating a new "pc-dimm" device.
+pc-dimm表示内存条
 
+The guest RAM itself isn't contained inside the "pc-dimm" object.
+ Instead the "pc-dimm" must be associated with a "memory-backend" object.
+必须依靠内存后端来提供内存
+ */
 #include "qemu/osdep.h"
 #include "hw/boards.h"
 #include "hw/mem/pc-dimm.h"
@@ -293,7 +301,9 @@ static void pc_dimm_class_init(ObjectClass *oc, void *data)
     mdc->get_memory_region = pc_dimm_md_get_memory_region;
     mdc->fill_device_info = pc_dimm_md_fill_device_info;
 }
-
+/* 
+表示一个新设备信息和定义
+*/
 static const TypeInfo pc_dimm_info = {
     .name          = TYPE_PC_DIMM,
     .parent        = TYPE_DEVICE,
@@ -306,7 +316,9 @@ static const TypeInfo pc_dimm_info = {
         { }
     },
 };
-
+/* 
+看来添加一个设备类型就是定义这个info?
+*/
 static void pc_dimm_register_types(void)
 {
     type_register_static(&pc_dimm_info);

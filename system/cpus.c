@@ -291,7 +291,9 @@ static int do_vm_stop(RunState state, bool send_stop)
 {
     int ret = 0;
     RunState oldstate = runstate_get();
-
+    /* QEMU stops the vCPU, tick counting and associated virtual clocks. 
+    It also calls a special service: vm_state_notify with the new running 
+    state of the VM as argument. */
     if (runstate_is_live(oldstate)) {
         vm_was_suspended = (oldstate == RUN_STATE_SUSPENDED);
         runstate_set(state);
@@ -330,7 +332,8 @@ bool cpu_can_run(CPUState *cpu)
     }
     return true;
 }
-
+/* while handling the debug exception being raised, QEMU prepared 
+a debug request to the main loop from cpu_handle_guest_debug */
 void cpu_handle_guest_debug(CPUState *cpu)
 {
     if (replay_running_debug()) {
@@ -346,6 +349,7 @@ void cpu_handle_guest_debug(CPUState *cpu)
         }
     } else {
         gdb_set_stop_cpu(cpu);
+        // triggers an event in the main loop
         qemu_system_debug_request();
         cpu->stopped = true;
     }
@@ -716,7 +720,10 @@ void cpu_stop_current(void)
         cpu_exit(current_cpu);
     }
 }
-
+/* The vm_stop function checks where it is called from. If for instance a virtual
+ CPU calls it during the emulation of an instruction, a stop request is raised 
+ instead of handling the run state transition directly. Because state transitions 
+ only happen in the QEMU main loop thread */
 int vm_stop(RunState state)
 {
     if (qemu_in_vcpu_thread()) {

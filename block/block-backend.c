@@ -736,6 +736,8 @@ const char *blk_name(const BlockBackend *blk)
 }
 
 /*
+-drive file=/path/to/flash.code,format=raw,id=mxfc-flash-code
+查找id对应的BlockBackend
  * Return the BlockBackend with name @name if it exists, else null.
  * @name must not be null.
  */

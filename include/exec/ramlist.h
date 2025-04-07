@@ -49,6 +49,16 @@ typedef struct RAMList {
     RAMBlock *mru_block;
     /* RCU-enabled, writes protected by the ramlist lock. */
     QLIST_HEAD(, RAMBlock) blocks;
+    /* 
+     When the guest CPU or device DMA stores to guest RAM this needs to be noticed by several users:
+1. The live migration feature relies on tracking dirty memory pages so they can be resent if they
+ change during live migration.
+2. TCG relies on tracking self-modifying code so it can recompile changed instructions.
+3. Graphics card emulation relies on tracking dirty video memory to redraw only scanlines that have
+ changed.
+There are dirty memory bitmaps for each of these users in ram_list because dirty memory tracking can
+ be enabled or disabled independently for each of these users.
+    */
     DirtyMemoryBlocks *dirty_memory[DIRTY_MEMORY_NUM];
     unsigned int num_dirty_blocks;
     uint32_t version;

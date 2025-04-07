@@ -175,6 +175,7 @@ static int rr_cpu_count(void)
  * the vCPU and ensure we don't get stuck in a tight loop in one vCPU.
  * This is done explicitly rather than relying on side-effects
  * elsewhere.
+ 这是一个单线程的vCPU实现,每个vCPU依次模拟
  */
 
 static void *rr_cpu_thread_fn(void *arg)
@@ -258,6 +259,7 @@ static void *rr_cpu_thread_fn(void *arg)
                 if (icount_enabled()) {
                     icount_prepare_for_run(cpu, cpu_budget);
                 }
+                // tcg开始执行cpu
                 r = tcg_cpu_exec(cpu);
                 if (icount_enabled()) {
                     icount_process_data(cpu);

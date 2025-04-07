@@ -160,6 +160,7 @@ typedef enum X86Seg {
 #define HF_IOPL_SHIFT       12 /* must be same as eflags */
 #define HF_LMA_SHIFT        14 /* only used on x86_64: long mode active */
 #define HF_CS64_SHIFT       15 /* only used on x86_64: 64 bit code segment  */
+/* 断点相关的掩码 */
 #define HF_RF_SHIFT         16 /* must be same as eflags */
 #define HF_VM_SHIFT         17 /* must be same as eflags */
 #define HF_AC_SHIFT         18 /* must be same as eflags */

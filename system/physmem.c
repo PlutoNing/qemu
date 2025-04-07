@@ -92,6 +92,7 @@
 
 /* ram_list is read under rcu_read_lock()/rcu_read_unlock().  Writes
  * are protected by the ramlist lock.
+===============================================
  */
 RAMList ram_list = { .blocks = QLIST_HEAD_INITIALIZER(ram_list.blocks) };
 
@@ -2231,7 +2232,13 @@ RAMBlock *qemu_ram_alloc_from_ptr(ram_addr_t size, void *host,
     return qemu_ram_alloc_internal(size, size, NULL, host, RAM_PREALLOC, mr,
                                    errp);
 }
-
+/* 
+Memory inside a "memory-backend" is actually mmapped by RAMBlock through
+qemu_ram_alloc() (exec.c). Each RAMBlock has a pointer to the mmap memory
+and also a ram_addr_t offset. This ram_addr_t offset is interesting because
+it is in a global namespace so the RAMBlock can be looked up by the offset.
+backend的内存在qemu的机制里面,是通过RAMBlock表示的.
+*/
 RAMBlock *qemu_ram_alloc(ram_addr_t size, uint32_t ram_flags,
                          MemoryRegion *mr, Error **errp)
 {
@@ -2785,7 +2792,14 @@ static void tcg_commit(MemoryListener *listener)
         tcg_commit_cpu(cpu, RUN_ON_CPU_HOST_PTR(cpuas));
     }
 }
+/* 
+Default memory regions and address spaces are created by QEMU. 
+The most important is the system memory region which is created 
+by memory_map_init() from cpu_exec_init_all().
 
+It can be seen as the top level one, and usually subregions are 
+added to the system memory region.
+*/
 static void memory_map_init(void)
 {
     system_memory = g_malloc(sizeof(*system_memory));
@@ -3287,7 +3301,14 @@ void address_space_register_map_client(AddressSpace *as, QEMUBH *bh)
         address_space_notify_map_clients_locked(as);
     }
 }
+/* 
+Default memory regions and address spaces are created by QEMU. 
+The most important is the system memory region which is created 
+by memory_map_init() from cpu_exec_init_all().
 
+It can be seen as the top level one, and usually subregions are 
+added to the system memory region.
+*/
 void cpu_exec_init_all(void)
 {
     qemu_mutex_init(&ram_list.mutex);

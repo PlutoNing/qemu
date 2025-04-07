@@ -28,7 +28,9 @@ static struct arm_boot_info cubieboard_binfo = {
     .loader_start = AW_A10_SDRAM_BASE,
     .board_id = 0x1008,
 };
-
+/* 
+初始化各种东西
+*/
 static void cubieboard_init(MachineState *machine)
 {
     AwA10State *a10;

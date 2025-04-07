@@ -9,7 +9,49 @@
  * This work is licensed under the terms of the GNU GPL, version 2 or later.
  * See the COPYING file in the top-level directory.
  */
+/* 
+真正含有内存, 提供给pc-dimm
+The "memory-backend" device (backends/hostmem.c) contains the actual host 
+memory that backs guest RAM. This can either be anonymous mmapped memory
+ or file-backed mmapped memory. File-backed guest RAM allows Linux hugetlbfs
+ usage for huge pages on the host and also shared-memory so other host
+  applications can access to guest RAM.
 
+The "pc-dimm" and "memory-backend" objects are the user-visible parts of
+ guest RAM in QEMU. They can be managed using the QEMU command-line and
+  QMP monitor interface. This is just the tip of the iceberg though because
+   there are still several aspects of guest RAM internal to QEMU that will
+    be covered next.
+
+
+pc-dimm       memory-backend
+|             |
++----- 1:1 ---+
+       |
+       User-visible objects
+       |
+       AddressSpace       MemoryRegion
+       |                   |
+       +----- 1:1 ---------+
+              |
+              Guest physical RAM layout
+              |
+              RAMList         RAMBlock
+              |               |
+              +----- 1:1 -----+
+                     |
+                     Host mmap
+                        |
+                        host
+                        |
+                        memory chunks
+Memory inside a "memory-backend" is actually mmapped by RAMBlock through
+qemu_ram_alloc() (exec.c). Each RAMBlock has a pointer to the mmap memory
+and also a ram_addr_t offset. This ram_addr_t offset is interesting because
+it is in a global namespace so the RAMBlock can be looked up by the offset.
+backend的内存在qemu的机制里面,是通过RAMBlock表示的.
+
+*/
 #include "qemu/osdep.h"
 #include "system/hostmem.h"
 #include "hw/boards.h"

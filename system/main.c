@@ -39,7 +39,7 @@
 #ifdef CONFIG_DARWIN
 #include <CoreFoundation/CoreFoundation.h>
 #endif
-
+/* wait for event requests to be processed */
 static void *qemu_default_main(void *opaque)
 {
     int status;

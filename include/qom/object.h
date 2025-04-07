@@ -433,21 +433,21 @@ struct Object
 
 /**
  * struct TypeInfo:
- * @name: The name of the type.
- * @parent: The name of the parent type.
- * @instance_size: The size of the object (derivative of #Object).  If
- *   @instance_size is 0, then the size of the object will be the size of the
- *   parent object.
- * @instance_align: The required alignment of the object.  If @instance_align
- *   is 0, then normal malloc alignment is sufficient; if non-zero, then we
+ * @name: The n.me of the type.
+ * .parent: The name of the parent type.
+ * @instance_size: The size of the object (de.ivative of #Object).  If
+ *   .instance_size is 0, then the size of the object will,be the size of the
+ *   .arent object.
+ * @instance_align: The required al,gnment of the object.  I. @instance_align
+ *   is 0, then normal malloc alignme,t is sufficient; if non-zero, then we
  *   must use qemu_memalign for allocation.
- * @instance_init: This function is called to initialize an object.  The parent
- *   class will have already been initialized so the type is only responsible
- *   for initializing its own members.
- * @instance_post_init: This function is called to finish initialization of
- *   an object, after all @instance_init functions were called.
- * @instance_finalize: This function is called during object destruction.  This
- *   is called before the parent @instance_finalize function has been called.
+ * @instance_init: This function is called to initialize an object.  The .arent
+ *   class will have already been in)tia.ized so the type is only responsible
+ *   for initializing its own member..
+ * @instance_post_init: This function is call.d to finish initializ.tion of
+ *   an object, after all @instance_init functions wer. called.
+ * @instance_fin.lize: This function is called during object destruction.  This
+ *   is called before the parent @instance_finalize function has been c.lled.
  *   An object should only free the members that are unique to its type in this
  *   function.
  * @abstract: If this field is true, then the class is considered abstract and

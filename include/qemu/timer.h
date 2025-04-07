@@ -43,7 +43,13 @@
  * machine is running.  It is used to increase @QEMU_CLOCK_VIRTUAL
  * while the CPUs are sleeping and thus not executing instructions.
  */
-
+/* QEMU implements several clocks to get informed about time. 
+Obviously you can still directly use host OS interface to get time information.
+Looking at timer.h we learn that there exists 4 clock types:
+realtime
+host
+virtual
+virtual_rt */
 typedef enum {
     QEMU_CLOCK_REALTIME = 0,
     QEMU_CLOCK_VIRTUAL = 1,
@@ -117,7 +123,7 @@ static inline int64_t qemu_clock_get_ms(QEMUClockType type)
 {
     return qemu_clock_get_ns(type) / SCALE_MS;
 }
-
+/* QEMU provides a qemu_clock_xxx API to control time for related clocks. */
 /**
  * qemu_clock_get_us;
  * @type: the clock type

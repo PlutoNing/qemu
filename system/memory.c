@@ -1664,7 +1664,9 @@ bool memory_region_init_ram_from_file(MemoryRegion *mr,
     }
     return true;
 }
-
+/* 
+比如可以把-drive指定的文件作为memregion
+*/
 bool memory_region_init_ram_from_fd(MemoryRegion *mr,
                                     Object *owner,
                                     const char *name,

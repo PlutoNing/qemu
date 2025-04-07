@@ -7,7 +7,10 @@
  * See the COPYING file in the top-level directory.
  *
  */
-
+/* QEMU provides a timer_xxx API to create, modify, reset, delete timers, 
+for different clocks and granularity (ms, ns). You can attach timers to 
+specific clocks. The main QEMU execution loop controls the virtual clock 
+and can disable timers when the VM vCPU is stopped. */
 #include "qemu/osdep.h"
 #include "qemu/main-loop.h"
 #include "exec/replay-core.h"

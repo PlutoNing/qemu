@@ -205,7 +205,10 @@ bool check_hw_breakpoints(CPUX86State *env, bool force_dr6_update)
 
     return hit_enabled;
 }
-
+/* 
+x86 tcg处理断点相关的
+cpu_handle_debug_exception调用
+*/
 void breakpoint_handler(CPUState *cs)
 {
     X86CPU *cpu = X86_CPU(cs);

@@ -314,7 +314,7 @@ static QTAILQ_HEAD(, VMChangeStateEntry) vm_change_state_head =
  *
  * Register a callback function that is invoked when the vm starts or stops
  * running.
- *
+ * 注册一个回调函数，当虚拟机开始或停止运行时调用。
  * Returns: an entry to be freed using qemu_del_vm_change_state_handler()
  */
 VMChangeStateEntry *qemu_add_vm_change_state_handler_prio(
@@ -761,7 +761,8 @@ void qemu_register_shutdown_notifier(Notifier *notifier)
 {
     notifier_list_add(&shutdown_notifiers, notifier);
 }
-
+/* The qemu_system_debug_request actually triggers an event 
+notification to the main loop */
 void qemu_system_debug_request(void)
 {
     debug_requested = 1;
@@ -772,7 +773,9 @@ static bool main_loop_should_exit(int *status)
 {
     RunState r;
     ShutdownCause request;
-
+    /* Back to the main loop, QEMU checks for a debug event with 
+    qemu_debug_requested and in that case changes the virtual machine 
+    running state to that of the related event with vm_stop */
     if (qemu_debug_requested()) {
         vm_stop(RUN_STATE_DEBUG);
     }
@@ -826,7 +829,10 @@ static bool main_loop_should_exit(int *status)
     }
     return false;
 }
-
+/* These RunState are handled in the QEMU main_loop which executes
+ in the QEMU startup thread, not the ones dedicated to virtual CPUs. 
+ The function just wait for event requests to be processed in 
+ main_loop_should_exit. They are generally raised from the virtual CPU threads */
 int qemu_main_loop(void)
 {
     int status = EXIT_SUCCESS;

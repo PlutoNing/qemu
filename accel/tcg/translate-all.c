@@ -286,7 +286,9 @@ static int setjmp_gen_code(CPUArchState *env, TranslationBlock *tb,
     return tcg_gen_code(tcg_ctx, tb, pc);
 }
 
-/* Called with mmap_lock held for user mode emulation.  */
+/* Called with mmap_lock held for user mode emulation.
+tcg翻译代码
+*/
 TranslationBlock *tb_gen_code(CPUState *cpu,
                               vaddr pc, uint64_t cs_base,
                               uint32_t flags, int cflags)

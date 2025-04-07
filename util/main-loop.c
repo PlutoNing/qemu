@@ -142,7 +142,7 @@ AioContext *qemu_get_aio_context(void)
 {
     return qemu_aio_context;
 }
-
+/* triggers an event notification to the main loop */
 void qemu_notify_event(void)
 {
     if (!qemu_aio_context) {

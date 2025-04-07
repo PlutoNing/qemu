@@ -106,9 +106,10 @@ static bool x86_debug_check_breakpoint(CPUState *cs)
 #endif
 
 #include "accel/tcg/cpu-ops.h"
-
+/* 处理x86的target */
 static const TCGCPUOps x86_tcg_ops = {
     .initialize = tcg_x86_init,
+    // 翻译代码
     .translate_code = x86_translate_code,
     .synchronize_from_tb = x86_cpu_synchronize_from_tb,
     .restore_state_to_opc = x86_restore_state_to_opc,
@@ -124,6 +125,7 @@ static const TCGCPUOps x86_tcg_ops = {
     .cpu_exec_halt = x86_cpu_exec_halt,
     .cpu_exec_interrupt = x86_cpu_exec_interrupt,
     .do_unaligned_access = x86_cpu_do_unaligned_access,
+    /* 处理断点相关的 cpu_handle_debug_exception会调用 */
     .debug_excp_handler = breakpoint_handler,
     .debug_check_breakpoint = x86_debug_check_breakpoint,
     .need_replay_interrupt = x86_need_replay_interrupt,
@@ -135,7 +137,7 @@ static void x86_tcg_cpu_init_ops(AccelCPUClass *accel_cpu, CPUClass *cc)
     /* for x86, all cpus use the same set of operations */
     cc->tcg_ops = &x86_tcg_ops;
 }
-
+/* tcg翻译x86 target */
 static void x86_tcg_cpu_class_init(CPUClass *cc)
 {
     cc->init_accel_cpu = x86_tcg_cpu_init_ops;
@@ -180,7 +182,9 @@ static void x86_tcg_cpu_instance_init(CPUState *cs)
 
     x86_tcg_cpu_xsave_init();
 }
-
+/* 
+初始化翻译x86的tcg
+*/
 static void x86_tcg_cpu_accel_class_init(ObjectClass *oc, void *data)
 {
     AccelCPUClass *acc = ACCEL_CPU_CLASS(oc);
@@ -192,6 +196,9 @@ static void x86_tcg_cpu_accel_class_init(ObjectClass *oc, void *data)
     acc->cpu_class_init = x86_tcg_cpu_class_init;
     acc->cpu_instance_init = x86_tcg_cpu_instance_init;
 }
+/* 
+翻译x86
+*/
 static const TypeInfo x86_tcg_cpu_accel_type_info = {
     .name = ACCEL_CPU_NAME("tcg"),
 
@@ -203,4 +210,7 @@ static void x86_tcg_cpu_accel_register_types(void)
 {
     type_register_static(&x86_tcg_cpu_accel_type_info);
 }
+/* 
+好像是负责翻译x86的
+*/
 type_init(x86_tcg_cpu_accel_register_types);

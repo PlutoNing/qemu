@@ -761,6 +761,9 @@ typedef struct MemoryRegionIoeventfd MemoryRegionIoeventfd;
 /** MemoryRegion:
  *
  * A struct representing a memory region.
+ ====================================================================
+ The MemoryRegion is the link between guest physical address space and the RAMBlocks containing the memory. 
+ Each MemoryRegion has the ram_addr_t offset of the RAMBlock and each RAMBlock has a MemoryRegion pointer.
  */
 struct MemoryRegion {
     Object parent_obj;
@@ -1097,6 +1100,9 @@ typedef struct AddressSpaceMapClient {
 
 /**
  * struct AddressSpace: describes a mapping of addresses to #MemoryRegion objects
+ ===================================
+ All CPU architectures have a memory space and some also have an I/O address space.
+This is represented by AddressSpace, which contains a tree of MemoryRegions (include/exec/memory.h).
  */
 struct AddressSpace {
     /* private: */

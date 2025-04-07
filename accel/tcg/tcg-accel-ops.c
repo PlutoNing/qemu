@@ -71,12 +71,13 @@ void tcg_cpu_destroy(CPUState *cpu)
 {
     cpu_thread_signal_destroyed(cpu);
 }
-
+/* tcg执行cpu */
 int tcg_cpu_exec(CPUState *cpu)
 {
     int ret;
     assert(tcg_enabled());
     cpu_exec_start(cpu);
+    // 执行指令
     ret = cpu_exec(cpu);
     cpu_exec_end(cpu);
     return ret;

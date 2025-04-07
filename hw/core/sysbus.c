@@ -203,7 +203,14 @@ void sysbus_init_ioports(SysBusDevice *dev, uint32_t ioport, uint32_t size)
 static void sysbus_device_realize(DeviceState *dev, Error **errp)
 {
 }
-
+/* Remember, the sysbus_create_varargs function takes a variable number
+ of qemu_irq as arguments. These irqs are the one to be connected with
+  the device being created.
+We are creating an interrupt controller, whose main purpose is to receive 
+interrupt requests from other devices. But it also has to be connected to 
+the CPU IRQ pins. That way, the CPU will be able to raise interrupts to 
+the running operating system kernel and call its interrupt service routines 
+or vector handlers whatever you call them. */
 DeviceState *sysbus_create_varargs(const char *name,
                                    hwaddr addr, ...)
 {

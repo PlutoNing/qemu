@@ -3605,7 +3605,9 @@ static void gen_multi0F(DisasContext *s, X86DecodedInsn *decode)
 }
 
 #include "decode-new.c.inc"
-
+/* 
+初始化翻译x86的tcg
+*/
 void tcg_x86_init(void)
 {
     static const char reg_names[CPU_NB_REGS][4] = {
@@ -3637,6 +3639,7 @@ void tcg_x86_init(void)
         [R_ESP] = "esp",
 #endif
     };
+    // pc寄存器
     static const char eip_name[] = {
 #ifdef TARGET_X86_64
         "rip"
@@ -3644,6 +3647,7 @@ void tcg_x86_init(void)
         "eip"
 #endif
     };
+    // 数据段和代码段堆栈段
     static const char seg_base_names[6][8] = {
         [R_CS] = "cs_base",
         [R_DS] = "ds_base",
@@ -3768,7 +3772,9 @@ static void i386_tr_insn_start(DisasContextBase *dcbase, CPUState *cpu)
     }
     tcg_gen_insn_start(pc_arg, dc->cc_op);
 }
-
+/* 
+x86翻译指令的ops回调
+*/
 static void i386_tr_translate_insn(DisasContextBase *dcbase, CPUState *cpu)
 {
     DisasContext *dc = container_of(dcbase, DisasContext, base);
@@ -3866,15 +3872,19 @@ static void i386_tr_tb_stop(DisasContextBase *dcbase, CPUState *cpu)
         g_assert_not_reached();
     }
 }
-
+/* However the translator_loop function is generic but called with
+ target specific translator operators (ie. i386_tr_ops). */
 static const TranslatorOps i386_tr_ops = {
     .init_disas_context = i386_tr_init_disas_context,
     .tb_start           = i386_tr_tb_start,
     .insn_start         = i386_tr_insn_start,
+    // 翻译指令
     .translate_insn     = i386_tr_translate_insn,
     .tb_stop            = i386_tr_tb_stop,
 };
-
+/* 
+tcg翻译x86的代码
+*/
 void x86_translate_code(CPUState *cpu, TranslationBlock *tb,
                         int *max_insns, vaddr pc, void *host_pc)
 {

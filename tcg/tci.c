@@ -345,6 +345,7 @@ static void tci_qemu_st(CPUArchState *env, uint64_t taddr, uint64_t val,
 
 /* Interpret pseudo code in tb. */
 /*
+执行tb
  * Disable CFI checks.
  * One possible operation in the pseudo code is a call to binary code.
  * Therefore, disable CFI checks in the interpreter function
@@ -374,7 +375,7 @@ uintptr_t QEMU_DISABLE_CFI tcg_qemu_tb_exec(CPUArchState *env,
         MemOpIdx oi;
         int32_t ofs;
         void *ptr;
-
+        // 取指令
         insn = *tb_ptr++;
         opc = extract32(insn, 0, 8);
 
