@@ -285,7 +285,7 @@ static bool emulate_arm_fpa11(CPUARMState *env, uint32_t opcode)
 
 void cpu_loop(CPUARMState *env)
 {
-    CPUState *cs = env_cpu(env);
+    CPUState *cs = env_cpu(env);/* 获取env的cpu */
     int trapnr, si_signo, si_code;
     unsigned int n, insn;
     abi_ulong ret;
@@ -477,7 +477,7 @@ void cpu_loop(CPUARMState *env)
         process_pending_signals(env);
     }
 }
-
+/* 把regs一些拷贝到env的cpu和regs */
 void target_cpu_copy_regs(CPUArchState *env, target_pt_regs *regs)
 {
     CPUState *cpu = env_cpu(env);

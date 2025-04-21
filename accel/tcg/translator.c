@@ -40,7 +40,7 @@ bool translator_io_start(DisasContextBase *db)
     }
     return true;
 }
-
+/* 翻译tb */
 static TCGOp *gen_tb_start(DisasContextBase *db, uint32_t cflags)
 {
     TCGv_i32 count = NULL;
@@ -135,7 +135,7 @@ void translator_loop(CPUState *cpu, TranslationBlock *tb, int *max_insns,
     db->pc_next = pc;
     db->is_jmp = DISAS_NEXT;
     db->num_insns = 0;
-    db->max_insns = *max_insns;
+    db->max_insns = *max_insns;/* 可能是512 */
     db->insn_start = NULL;
     db->fake_insn = false;
     db->host_addr[0] = host_pc;
@@ -146,7 +146,7 @@ void translator_loop(CPUState *cpu, TranslationBlock *tb, int *max_insns,
     ops->init_disas_context(db, cpu);
     tcg_debug_assert(db->is_jmp == DISAS_NEXT);  /* no early exit */
 
-    /* Start translating.  */
+    /* Start translating. 开始翻译 */
     icount_start_insn = gen_tb_start(db, cflags);
     ops->tb_start(db, cpu);
     tcg_debug_assert(db->is_jmp == DISAS_NEXT);  /* no early exit */
@@ -156,7 +156,7 @@ void translator_loop(CPUState *cpu, TranslationBlock *tb, int *max_insns,
 
     while (true) {
         *max_insns = ++db->num_insns;
-        ops->insn_start(db, cpu);
+        ops->insn_start(db, cpu);/* 准备翻译这个insn？ */
         db->insn_start = tcg_last_op();
         if (first_insn_start == NULL) {
             first_insn_start = db->insn_start;
@@ -171,7 +171,7 @@ void translator_loop(CPUState *cpu, TranslationBlock *tb, int *max_insns,
          * Disassemble one instruction.  The translate_insn hook should
          * update db->pc_next and db->is_jmp to indicate what should be
          * done next -- either exiting this loop or locate the start of
-         * the next instruction.
+         * the next instruction. 反汇编一个指令
          */
         ops->translate_insn(db, cpu);
 

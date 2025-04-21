@@ -151,7 +151,7 @@ int loader_exec(int fdexec, const char *filename, char **argv, char **envp,
     bprm->envc = count(envp);
     bprm->envp = envp;
 
-    retval = prepare_binprm(bprm);
+    retval = prepare_binprm(bprm);/* 初始化bprm， 读取一些exec到bprm的buf */
 
     if (retval < 4) {
         return -ENOEXEC;
@@ -179,7 +179,7 @@ int loader_exec(int fdexec, const char *filename, char **argv, char **envp,
     do_init_thread(regs, infop);
     return 0;
 }
-
+/* 读入程序文件的某一部分， 比如某个节，某个节头什么的 */
 bool imgsrc_read(void *dst, off_t offset, size_t len,
                  const ImageSource *img, Error **errp)
 {
@@ -206,12 +206,12 @@ bool imgsrc_read(void *dst, off_t offset, size_t len,
     }
     return false;
 }
-
+/* 把img读到新分配的内存并返回 */
 void *imgsrc_read_alloc(off_t offset, size_t len,
                         const ImageSource *img, Error **errp)
 {
     void *alloc = g_malloc(len);
-    bool ok = imgsrc_read(alloc, offset, len, img, errp);
+    bool ok = imgsrc_read(alloc, offset, len, img, errp);/* 从image读到alloc */
 
     if (!ok) {
         g_free(alloc);
@@ -229,7 +229,7 @@ abi_long imgsrc_mmap(abi_ulong start, abi_ulong len, int prot,
 
     assert(flags == (MAP_PRIVATE | MAP_FIXED));
 
-    if (src->fd >= 0) {
+    if (src->fd >= 0) {/* 要映射的程序文件的fd存储在src */
         return target_mmap(start, len, prot, flags, src->fd, offset);
     }
 

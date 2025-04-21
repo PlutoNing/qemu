@@ -73,7 +73,7 @@ abi_long imgsrc_mmap(abi_ulong start, abi_ulong len, int prot,
 struct linux_binprm {
     char buf[BPRM_BUF_SIZE] __attribute__((aligned));
     ImageSource src;
-    abi_ulong p;
+    abi_ulong p;/* 似乎是栈 */
     int e_uid, e_gid;
     int argc, envc;
     char **argv;

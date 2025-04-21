@@ -368,7 +368,7 @@ struct TCGContext {
     intptr_t frame_end;
     TCGTemp *frame_temp;
 
-    TranslationBlock *gen_tb;     /* tb for which code is being generated */
+    TranslationBlock *gen_tb;     /* tb for which code is being generated，指向当前正在生成的tb？ */
     tcg_insn_unit *code_buf;      /* pointer for start of tb */
     tcg_insn_unit *code_ptr;      /* pointer for running end of tb */
 

@@ -114,7 +114,7 @@ struct DisasContextBase {
  *      Print instruction disassembly to log.
  */
 typedef struct TranslatorOps {
-    void (*init_disas_context)(DisasContextBase *db, CPUState *cpu);
+    void (*init_disas_context)(DisasContextBase *db, CPUState *cpu);/* 开始翻译tb前，作为loop函数的参数dc的db， 好像是反汇编相关 */
     void (*tb_start)(DisasContextBase *db, CPUState *cpu);
     void (*insn_start)(DisasContextBase *db, CPUState *cpu);
     void (*translate_insn)(DisasContextBase *db, CPUState *cpu);

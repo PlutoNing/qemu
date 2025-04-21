@@ -357,7 +357,7 @@ static inline void init_thread(struct target_pt_regs *regs,
         regs->uregs[16] |= CPSR_T;
     }
     regs->uregs[15] = infop->entry & 0xfffffffe;
-    regs->uregs[13] = infop->start_stack;
+    regs->uregs[13] = infop->start_stack;/* 一个一个的设置寄存器 */
     /* FIXME - what to for failure of get_user()? */
     get_user_ual(regs->uregs[2], stack + 8); /* envp */
     get_user_ual(regs->uregs[1], stack + 4); /* envp */
@@ -464,8 +464,8 @@ enum {
 
 static bool init_guest_commpage(void)
 {
-    ARMCPU *cpu = ARM_CPU(thread_cpu);
-    int host_page_size = qemu_real_host_page_size();
+    ARMCPU *cpu = ARM_CPU(thread_cpu); /* cpu表示一个cpu实例 */
+    int host_page_size = qemu_real_host_page_size(); /* 大小4KB */
     abi_ptr commpage;
     void *want;
     void *addr;
@@ -479,7 +479,7 @@ static bool init_guest_commpage(void)
     }
 
     commpage = HI_COMMPAGE & -host_page_size;
-    want = g2h_untagged(commpage);
+    want = g2h_untagged(commpage);/* 分配want起始的一页内存 */
     addr = mmap(want, host_page_size, PROT_READ | PROT_WRITE,
                 MAP_ANONYMOUS | MAP_PRIVATE |
                 (commpage < reserved_va ? MAP_FIXED : MAP_FIXED_NOREPLACE),
@@ -492,7 +492,7 @@ static bool init_guest_commpage(void)
     if (addr != want) {
         return false;
     }
-
+/* addr==want就是分配成功了 */
     /* Set kernel helper versions; rest of page is 0.  */
     __put_user(5, (uint32_t *)g2h_untagged(0xffff0ffcu));
 
@@ -502,7 +502,7 @@ static bool init_guest_commpage(void)
     }
 
     page_set_flags(commpage, commpage | (host_page_size - 1),
-                   PAGE_READ | PAGE_EXEC | PAGE_VALID);
+                   PAGE_READ | PAGE_EXEC | PAGE_VALID);/* 会把范围插入一个什么tree */
     return true;
 }
 
@@ -2322,14 +2322,14 @@ static abi_ulong copy_elf_strings(int argc, char **argv, char *scratch,
  * backwards compatibility.
  */
 #define STACK_LOWER_LIMIT (32 * TARGET_PAGE_SIZE)
-
+/* 分配栈空间 */
 static abi_ulong setup_arg_pages(struct linux_binprm *bprm,
                                  struct image_info *info)
 {
     abi_ulong size, error, guard;
     int prot;
 
-    size = guest_stack_size;
+    size = guest_stack_size;/* 栈大小 */
     if (size < STACK_LOWER_LIMIT) {
         size = STACK_LOWER_LIMIT;
     }
@@ -2349,7 +2349,7 @@ static abi_ulong setup_arg_pages(struct linux_binprm *bprm,
         prot |= PROT_EXEC;
     }
     error = target_mmap(0, size + guard, prot,
-                        MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
+                        MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);/* 分配size大小的内存 */
     if (error == -1) {
         perror("mmap stack");
         exit(-1);
@@ -2468,7 +2468,7 @@ static abi_ulong loader_build_fdpic_loadmap(struct image_info *info, abi_ulong s
 
     return sp;
 }
-
+/* elf—tables是什么 */
 static abi_ulong create_elf_tables(abi_ulong p, int argc, int envc,
                                    struct elfhdr *exec,
                                    struct image_info *info,
@@ -2528,7 +2528,7 @@ static abi_ulong create_elf_tables(abi_ulong p, int argc, int envc,
             sp -= (len + n - 1) & ~(n - 1);
             u_platform = sp;
             /* FIXME - check return value of memcpy_to_target() for failure */
-            memcpy_to_target(sp, k_platform, len);
+            memcpy_to_target(sp, k_platform, len);/* 把什么东西拷贝到栈 */
         } else {
             memcpy_to_target(sp, k_platform, len);
             u_platform = sp;
@@ -2553,7 +2553,7 @@ static abi_ulong create_elf_tables(abi_ulong p, int argc, int envc,
         sp -= 16;
         u_rand_bytes = sp;
         /* FIXME - check return value of memcpy_to_target() for failure */
-        memcpy_to_target(sp, k_rand_bytes, 16);
+        memcpy_to_target(sp, k_rand_bytes, 16);/* 把产生的的随机数拷贝到栈 */
     } else {
         memcpy_to_target(sp, k_rand_bytes, 16);
         u_rand_bytes = sp;
@@ -2701,7 +2701,7 @@ static abi_ulong create_elf_tables(abi_ulong p, int argc, int envc,
  */
 static int pgb_try_mmap(uintptr_t addr, uintptr_t addr_last, bool keep)
 {
-    size_t size = addr_last - addr + 1;
+    size_t size = addr_last - addr + 1; /* pgb_try_mmap的作用是探测指定内存地址范围 [addr, addr_last] 是否已被占用，并通过尝试映射来验证其可用性 */
     void *p = mmap((void *)addr, size, PROT_NONE,
                    MAP_ANONYMOUS | MAP_PRIVATE |
                    MAP_NORESERVE | MAP_FIXED_NOREPLACE, -1, 0);
@@ -2714,7 +2714,7 @@ static int pgb_try_mmap(uintptr_t addr, uintptr_t addr_last, bool keep)
     if (!keep || !ret) {
         munmap(p, size);
     }
-    return ret;
+    return ret; /* 返回1说明区域之前没有被占用，可以分配 */
 }
 
 /**
@@ -2734,7 +2734,7 @@ static int pgb_try_mmap_skip_brk(uintptr_t addr, uintptr_t addr_last,
     if (addr <= brk_last && brk <= addr_last) {
         return 0;
     }
-    return pgb_try_mmap(addr, addr_last, keep);
+    return pgb_try_mmap(addr, addr_last, keep);/* 返回1说明没有被占用 */
 }
 
 /**
@@ -2748,20 +2748,20 @@ static int pgb_try_mmap_skip_brk(uintptr_t addr, uintptr_t addr_last,
  */
 
 typedef struct PGBAddrs {
-    uintptr_t bounds[3][2]; /* start/last pairs */
+    uintptr_t bounds[3][2]; /* start/last pairs , 似乎是描述了一些边界*/
     int nbounds;
 } PGBAddrs;
-
+/* 检查bounds指定的范围有没有被分配， 可能会根据keep参数决定是否分配这块内存 */
 static bool pgb_try_mmap_set(const PGBAddrs *ga, uintptr_t base, uintptr_t brk)
 {
     for (int i = ga->nbounds - 1; i >= 0; --i) {
         if (pgb_try_mmap_skip_brk(ga->bounds[i][0] + base,
                                   ga->bounds[i][1] + base,
                                   brk, i == 0 && reserved_va) <= 0) {
-            return false;
+            return false; /* 内存之前没有被占用 */
         }
     }
-    return true;
+    return true; /* 全部bounds的范围内存之前被占用了 */
 }
 
 /**
@@ -2954,7 +2954,7 @@ static void pgb_dynamic(const char *image_name, uintptr_t guest_loaddr,
     PGBAddrs ga;
 
     /* Try the identity map first. */
-    if (pgb_addr_set(&ga, guest_loaddr, guest_hiaddr, true)) {
+    if (pgb_addr_set(&ga, guest_loaddr, guest_hiaddr, true)) {/* 在ga里面初始化了一些边界 */
         brk = (uintptr_t)sbrk(0);
         if (pgb_try_mmap_set(&ga, 0, brk)) {
             guest_base = 0;
@@ -3184,8 +3184,8 @@ static bool parse_elf_properties(const ImageSource *src,
 
 /**
  * load_elf_image: Load an ELF image into the address space.
- * @image_name: the filename of the image, to use in error messages.
- * @src: the ImageSource from which to read.
+ * @image_name: the filename of the image, to use in error messages.要执行的程序
+ * @src: the ImageSource from which to read. 指定了bprm的fd，cache就是bprm的buf
  * @info: info collected from the loaded image.
  * @ehdr: the ELF header, not yet bswapped.
  * @pinterp_name: record any PT_INTERP string found.
@@ -3208,7 +3208,7 @@ static void load_elf_image(const char *image_name, const ImageSource *src,
      * Note that we rely on the bswapped ehdr staying in bprm_buf,
      * for later use by load_elf_binary and create_elf_tables.
      */
-    if (!imgsrc_read(ehdr, 0, sizeof(*ehdr), src, &err)) {
+    if (!imgsrc_read(ehdr, 0, sizeof(*ehdr), src, &err)) {/* 从src的cache读入到ehdr */
         goto exit_errmsg;
     }
     if (!elf_check_ident(ehdr)) {
@@ -3220,7 +3220,7 @@ static void load_elf_image(const char *image_name, const ImageSource *src,
         error_setg(&err, "Invalid ELF image for this architecture");
         goto exit_errmsg;
     }
-
+/* 把ehdr这个头指涉的一些东西， 读取src的phnum个ph到phdr */
     phdr = imgsrc_read_alloc(ehdr->e_phoff,
                              ehdr->e_phnum * sizeof(struct elf_phdr),
                              src, &err);
@@ -3241,9 +3241,9 @@ static void load_elf_image(const char *image_name, const ImageSource *src,
     loaddr = -1, hiaddr = 0;
     align = 0;
     info->exec_stack = EXSTACK_DEFAULT;
-    for (i = 0; i < ehdr->e_phnum; ++i) {
-        struct elf_phdr *eppnt = phdr + i;
-        if (eppnt->p_type == PT_LOAD) {
+    for (i = 0; i < ehdr->e_phnum; ++i) {/* 逐个处理刚刚读入的phdr */
+        struct elf_phdr *eppnt = phdr + i; /* phdr是一系列hdr的数组 */
+        if (eppnt->p_type == PT_LOAD) {/* 又一个需要加载的程序seg */
             abi_ulong a = eppnt->p_vaddr & TARGET_PAGE_MASK;
             if (a < loaddr) {
                 loaddr = a;
@@ -3252,7 +3252,7 @@ static void load_elf_image(const char *image_name, const ImageSource *src,
             if (a > hiaddr) {
                 hiaddr = a;
             }
-            ++info->nsegs;
+            ++info->nsegs; /* 现在loaddr和hiaddr指向这个段的首尾？ */
             align |= eppnt->p_align;
         } else if (eppnt->p_type == PT_INTERP && pinterp_name) {
             g_autofree char *interp_name = NULL;
@@ -3280,10 +3280,10 @@ static void load_elf_image(const char *image_name, const ImageSource *src,
             info->exec_stack = eppnt->p_flags & PF_X;
         }
     }
-
+/* 现在loaddr和hiaddr似乎是load seg的首尾？ */
     load_addr = loaddr;
 
-    align = pow2ceil(align);
+    align = pow2ceil(align);/* 大小4KB */
 
     if (pinterp_name != NULL) {
         if (ehdr->e_type == ET_EXEC) {
@@ -3419,7 +3419,7 @@ static void load_elf_image(const char *image_name, const ImageSource *src,
 
     for (i = 0; i < ehdr->e_phnum; i++) {
         struct elf_phdr *eppnt = phdr + i;
-        if (eppnt->p_type == PT_LOAD) {
+        if (eppnt->p_type == PT_LOAD) {/* 一个text之类的段 */
             abi_ulong vaddr, vaddr_po, vaddr_ps, vaddr_ef, vaddr_em;
             int elf_prot = 0;
 
@@ -3444,7 +3444,7 @@ static void load_elf_image(const char *image_name, const ImageSource *src,
              * Some segments may be completely empty, with a non-zero p_memsz
              * but no backing file segment.
              */
-            if (eppnt->p_filesz != 0) {
+            if (eppnt->p_filesz != 0) {/* 把这个代码段映射到内存 */
                 error = imgsrc_mmap(vaddr_ps, eppnt->p_filesz + vaddr_po,
                                     elf_prot, MAP_PRIVATE | MAP_FIXED,
                                     src, eppnt->p_offset - vaddr_po);
@@ -3496,7 +3496,7 @@ static void load_elf_image(const char *image_name, const ImageSource *src,
     }
 
     if (qemu_log_enabled()) {
-        load_symbols(ehdr, src, load_bias);
+        load_symbols(ehdr, src, load_bias);/* 加载符号表相关 */
     }
 
     debuginfo_report_elf(image_name, src->fd, load_bias);
@@ -3647,7 +3647,7 @@ static void load_symbols(struct elfhdr *hdr, const ImageSource *src,
 
     shnum = hdr->e_shnum;
     shdr = imgsrc_read_alloc(hdr->e_shoff, shnum * sizeof(struct elf_shdr),
-                             src, NULL);
+                             src, NULL);/* 把节头表读入内存 */
     if (shdr == NULL) {
         return;
     }
@@ -3655,7 +3655,7 @@ static void load_symbols(struct elfhdr *hdr, const ImageSource *src,
     bswap_shdr(shdr, shnum);
     for (i = 0; i < shnum; ++i) {
         if (shdr[i].sh_type == SHT_SYMTAB) {
-            sym_idx = i;
+            sym_idx = i;/* 指向符号表的索引 */
             str_idx = shdr[i].sh_link;
             goto found;
         }
@@ -3667,16 +3667,16 @@ static void load_symbols(struct elfhdr *hdr, const ImageSource *src,
  found:
     /* Now know where the strtab and symtab are.  Snarf them.  */
 
-    segsz = shdr[str_idx].sh_size;
-    strings = g_try_malloc(segsz);
+    segsz = shdr[str_idx].sh_size; /* 获取符号表link的字符串表的大小 */
+    strings = g_try_malloc(segsz); /* 分配内存 */
     if (!strings) {
         goto give_up;
     }
-    if (!imgsrc_read(strings, shdr[str_idx].sh_offset, segsz, src, NULL)) {
+    if (!imgsrc_read(strings, shdr[str_idx].sh_offset, segsz, src, NULL)) {/* 开始读入这个字符串表 */
         goto give_up;
     }
 
-    segsz = shdr[sym_idx].sh_size;
+    segsz = shdr[sym_idx].sh_size; /* 获取符号表大小 */
     if (segsz / sizeof(struct elf_sym) > INT_MAX) {
         /*
          * Implausibly large symbol table: give up rather than ploughing
@@ -3684,17 +3684,17 @@ static void load_symbols(struct elfhdr *hdr, const ImageSource *src,
          */
         goto give_up;
     }
-    nsyms = segsz / sizeof(struct elf_sym);
+    nsyms = segsz / sizeof(struct elf_sym); /* 符号数量？ */
     syms = g_try_malloc(segsz);
     if (!syms) {
         goto give_up;
     }
-    if (!imgsrc_read(syms, shdr[sym_idx].sh_offset, segsz, src, NULL)) {
+    if (!imgsrc_read(syms, shdr[sym_idx].sh_offset, segsz, src, NULL)) {/* 读入符号表 */
         goto give_up;
     }
 
     for (i = 0; i < nsyms; ) {
-        bswap_sym(syms + i);
+        bswap_sym(syms + i);/* 一个一个的处理符号？ */
         /* Throw away entries which we do not need.  */
         if (syms[i].st_shndx == SHN_UNDEF
             || syms[i].st_shndx >= SHN_LORESERVE
@@ -3786,7 +3786,7 @@ uint32_t get_elf_eflags(int fd)
     /* return architecture id */
     return ehdr.e_flags;
 }
-
+/* 加载elf程序，bprm的buf现在是elf三个字符开头的 */
 int load_elf_binary(struct linux_binprm *bprm, struct image_info *info)
 {
     /*
@@ -3804,15 +3804,15 @@ int load_elf_binary(struct linux_binprm *bprm, struct image_info *info)
 #ifdef TARGET_MIPS
     interp_info.fp_abi = MIPS_ABI_FP_UNKNOWN;
 #endif
-
+/* filename就是qemu-arm要执行的程序 */
     load_elf_image(bprm->filename, &bprm->src, info, &ehdr, &elf_interpreter);
 
     /* Do this so that we can load the interpreter, if need be.  We will
        change some of these later */
-    bprm->p = setup_arg_pages(bprm, info);
+    bprm->p = setup_arg_pages(bprm, info);/* 分配栈空间 */
 
     scratch = g_new0(char, TARGET_PAGE_SIZE);
-    if (STACK_GROWS_DOWN) {
+    if (STACK_GROWS_DOWN) {/* 开始拷贝args，envs到栈的顶部 */
         bprm->p = copy_elf_strings(1, &bprm->filename, scratch,
                                    bprm->p, info->stack_limit);
         info->file_string = bprm->p;
@@ -4478,8 +4478,8 @@ static int elf_core_dump(int signr, const CPUArchState *env)
     return ret;
 }
 #endif /* USE_ELF_CORE_DUMP */
-
+/* 加载完程序，布置好内存和栈后调用 */
 void do_init_thread(struct target_pt_regs *regs, struct image_info *infop)
 {
-    init_thread(regs, infop);
+    init_thread(regs, infop);/* 初始化线程 */
 }

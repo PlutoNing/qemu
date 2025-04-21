@@ -16,7 +16,7 @@ AccelState *current_accel(void)
 
     if (!accel) {
         AccelClass *ac = accel_find("tcg");
-
+/* ac的name是tcg */
         g_assert(ac != NULL);
         accel = ACCEL(object_new_with_class(OBJECT_CLASS(ac)));
     }

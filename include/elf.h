@@ -17,11 +17,11 @@ typedef int32_t  Elf64_Sword;
 typedef uint32_t Elf64_Word;
 typedef uint64_t Elf64_Xword;
 typedef int64_t  Elf64_Sxword;
-
+/* 动态链接信息段，包含动态库依赖和重定位表。QEMU 需读取此信息以加载依赖的共享库（如 ARM 的 libc.so）。 */
 /* These constants are for the segment types stored in the image headers */
 #define PT_NULL           0
-#define PT_LOAD           1
-#define PT_DYNAMIC        2
+#define PT_LOAD           1/* 需要被加载到内存的段（如代码段 .text、数据段 .data）。QEMU 会将这些段映射到模拟内存。 */
+#define PT_DYNAMIC        2 
 #define PT_INTERP         3
 #define PT_NOTE           4
 #define PT_SHLIB          5
@@ -1470,7 +1470,7 @@ typedef struct elf64_rela {
   Elf64_Sxword r_addend;    /* Constant addend used to compute value */
 } Elf64_Rela;
 
-typedef struct elf32_sym{
+typedef struct elf32_sym{ /* 表示二进制文件的符号表的一个符号 */
   Elf32_Word st_name;
   Elf32_Addr st_value;
   Elf32_Word st_size;
@@ -1497,19 +1497,19 @@ typedef struct elf64_sym {
 #define PN_XNUM         0xffff
 
 typedef struct elf32_hdr{
-  unsigned char e_ident[EI_NIDENT];
-  Elf32_Half e_type;
-  Elf32_Half e_machine;
-  Elf32_Word e_version;
+  unsigned char e_ident[EI_NIDENT];/* ELF 文件标识魔数​​：- 前4字节是 \x7FELF */
+  Elf32_Half e_type; /* 类型， exe，dyn， rel */
+  Elf32_Half e_machine; /* 目标架构， arm，386，aarch */
+  Elf32_Word e_version; /*  */
   Elf32_Addr e_entry;  /* Entry point */
-  Elf32_Off e_phoff;
-  Elf32_Off e_shoff;
+  Elf32_Off e_phoff; /* 程序头表偏移量？ */
+  Elf32_Off e_shoff; /* 节头表偏移量？ */
   Elf32_Word e_flags;
   Elf32_Half e_ehsize;
   Elf32_Half e_phentsize;
-  Elf32_Half e_phnum;
+  Elf32_Half e_phnum; /* 程序头表数量？ */
   Elf32_Half e_shentsize;
-  Elf32_Half e_shnum;
+  Elf32_Half e_shnum; /* 节头表中条目数量？ */
   Elf32_Half e_shstrndx;
 } Elf32_Ehdr;
 
@@ -1547,14 +1547,14 @@ typedef struct elf32_phdr{
   Elf32_Word p_align;
 } Elf32_Phdr;
 
-typedef struct elf64_phdr {
-  Elf64_Word p_type;
+typedef struct elf64_phdr { /* 4位 ELF 程序头表条目 */
+  Elf64_Word p_type; /* 类型， 加载的，解释器什么的 */
   Elf64_Word p_flags;
-  Elf64_Off p_offset;       /* Segment file offset */
-  Elf64_Addr p_vaddr;       /* Segment virtual address */
-  Elf64_Addr p_paddr;       /* Segment physical address */
-  Elf64_Xword p_filesz;     /* Segment size in file */
-  Elf64_Xword p_memsz;      /* Segment size in memory */
+  Elf64_Off p_offset;       /* Segment file offset  从文件开头到段数据的字节偏移*/
+  Elf64_Addr p_vaddr;       /* Segment virtual address 段在进程虚拟内存空间中的起始地址*/
+  Elf64_Addr p_paddr;       /* Segment physical address 通常与 p_vaddr 相同（用户态程序忽略物理地址）。 */
+  Elf64_Xword p_filesz;     /* Segment size in file 段在文件中的大小​​ */
+  Elf64_Xword p_memsz;      /* Segment size in memory ​​段在内存中的大小*/
   Elf64_Xword p_align;      /* Segment alignment, file & memory */
 } Elf64_Phdr;
 
@@ -1603,7 +1603,7 @@ typedef struct elf32_shdr {
   Elf32_Word sh_type;
   Elf32_Word sh_flags;
   Elf32_Addr sh_addr;
-  Elf32_Off sh_offset;
+  Elf32_Off sh_offset;/* 在文件的offset */
   Elf32_Word sh_size;
   Elf32_Word sh_link;
   Elf32_Word sh_info;
@@ -1611,15 +1611,15 @@ typedef struct elf32_shdr {
   Elf32_Word sh_entsize;
 } Elf32_Shdr;
 
-typedef struct elf64_shdr {
-  Elf64_Word sh_name;       /* Section name, index in string tbl */
-  Elf64_Word sh_type;       /* Type of section */
-  Elf64_Xword sh_flags;     /* Miscellaneous section attributes */
-  Elf64_Addr sh_addr;       /* Section virtual addr at execution */
-  Elf64_Off sh_offset;      /* Section file offset */
-  Elf64_Xword sh_size;      /* Size of section in bytes */
+typedef struct elf64_shdr { /* 节头表条目 */
+  Elf64_Word sh_name;       /* Section name, index in string tbl，指向 .shstrtab 节（节名称字符串表）中的偏移，用于获取节名称（如 .text、.data）。 */
+  Elf64_Word sh_type;       /* Type of section ，程序代码或数据类型， 符号表类型，字符串表类型，重定位表类型，不占空间的东西的类型*/
+  Elf64_Xword sh_flags;     /* Miscellaneous section attributes，可写，需加载，可执行 */
+  Elf64_Addr sh_addr;       /* Section virtual addr at execution，节在内存的虚拟类型 */
+  Elf64_Off sh_offset;      /* Section file offset，节在文件中的offset */
+  Elf64_Xword sh_size;      /* Size of section in bytes，节的大小 */
   Elf64_Word sh_link;       /* Index of another section */
-  Elf64_Word sh_info;       /* Additional section information */
+  Elf64_Word sh_info;       /* Additional section information，附加信息 */
   Elf64_Xword sh_addralign; /* Section alignment */
   Elf64_Xword sh_entsize;   /* Entry size if section holds table */
 } Elf64_Shdr;
@@ -1629,7 +1629,7 @@ typedef struct elf64_shdr {
 #define EI_MAG2     2
 #define EI_MAG3     3
 #define EI_CLASS    4
-#define EI_DATA     5
+#define EI_DATA     5/* 大小端？ */
 #define EI_VERSION  6
 #define EI_OSABI    7
 #define EI_PAD      8

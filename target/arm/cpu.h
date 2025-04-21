@@ -260,7 +260,7 @@ typedef enum ARMFPStatusFlavour {
 
 typedef struct CPUArchState {
     /* Regs for current mode.  */
-    uint32_t regs[16];
+    uint32_t regs[16];/* R0​​	-	​​常用于 ​​函数参数传递​​ 和 ​​返回值存储​​（第一个参数和返回值）。R1​​	-	​​函数调用第二个参数。​​R2​​	-	​函数调用的第三个参数。​​R3​​	-	​​函数调用的第四个参数。​​R4-R11​​	-	​​用于保存局部变量或中间结果。​​需在函数调用时保存​​（callee-saved）。​​R12​​	​​IP​​	​​内部过程调用暂存寄存器​​（Intra-Procedure Call Scratch Register），在函数调用时可能被链接器临时使用。​​R13​​	​​SP​​	​​栈指针​​（Stack Pointer），指向当前栈顶。​​R14​​	​​LR​​	​​链接寄存器​​（Link Register），保存函数返回地址（BL 指令后的下一条指令地址）。​​R15​​	​​PC​​	​​程序计数器​​（Program Counter），指向当前执行指令的地址。 */
 
     /* 32/64 switch only happens when taking and returning from
      * exceptions so the overlap semantics are taken care of then

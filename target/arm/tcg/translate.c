@@ -7550,10 +7550,10 @@ static bool insn_crosses_page(CPUARMState *env, DisasContext *s)
 
     return !thumb_insn_is_16bit(s, s->base.pc_next, insn);
 }
-
+/* arm tcg ops的dis assem函数回调 */
 static void arm_tr_init_disas_context(DisasContextBase *dcbase, CPUState *cs)
 {
-    DisasContext *dc = container_of(dcbase, DisasContext, base);
+    DisasContext *dc = container_of(dcbase, DisasContext, base);/* 获取到包裹这个db的dc，dc也是loop的参数 */
     CPUARMState *env = cpu_env(cs);
     ARMCPU *cpu = env_archcpu(env);
     CPUARMTBFlags tb_flags = arm_tbflags_from_tb(dc->base.tb);
@@ -7727,7 +7727,7 @@ static void arm_tr_insn_start(DisasContextBase *dcbase, CPUState *cpu)
     } else {
         condexec_bits = (dc->condexec_cond << 4) | (dc->condexec_mask >> 1);
     }
-    tcg_gen_insn_start(pc_arg, condexec_bits, 0);
+    tcg_gen_insn_start(pc_arg, condexec_bits, 0);/* 设置参数到op的args */
     dc->insn_start_updated = false;
 }
 
@@ -7778,7 +7778,7 @@ static void arm_post_translate_insn(DisasContext *dc)
         dc->condjmp = 0;
     }
 }
-
+/* arm tcg的ops */
 static void arm_tr_translate_insn(DisasContextBase *dcbase, CPUState *cpu)
 {
     DisasContext *dc = container_of(dcbase, DisasContext, base);
@@ -8117,7 +8117,7 @@ static void arm_tr_tb_stop(DisasContextBase *dcbase, CPUState *cpu)
         }
     }
 }
-
+/* 翻译arm代码的ops */
 static const TranslatorOps arm_translator_ops = {
     .init_disas_context = arm_tr_init_disas_context,
     .tb_start           = arm_tr_tb_start,
@@ -8150,5 +8150,5 @@ void arm_translate_code(CPUState *cpu, TranslationBlock *tb,
     }
 #endif
 
-    translator_loop(cpu, tb, max_insns, pc, host_pc, ops, &dc.base);
+    translator_loop(cpu, tb, max_insns, pc, host_pc, ops, &dc.base);/* 翻译代码 */
 }

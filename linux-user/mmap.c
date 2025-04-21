@@ -166,7 +166,7 @@ static int target_to_host_prot(int prot)
            (prot & PROT_EXEC ? PROT_READ : 0);
 }
 
-/* NOTE: all the constants are the HOST ones, but addresses are target. */
+/* NOTE: all the constants are the HOST ones, but addresses are target. 好像是设置地址区间的读写属性*/
 int target_mprotect(abi_ulong start, abi_ulong len, int target_prot)
 {
     int host_page_size = qemu_real_host_page_size();
@@ -200,7 +200,7 @@ int target_mprotect(abi_ulong start, abi_ulong len, int target_prot)
 
     mmap_lock();
 
-    if (host_last - host_start < host_page_size) {
+    if (host_last - host_start < host_page_size) {/* 小于一页的情况 */
         /* Single host page contains all guest pages: sum the prot. */
         prot1 = target_prot;
         for (abi_ulong a = host_start; a < start; a += TARGET_PAGE_SIZE) {
@@ -425,7 +425,7 @@ static abi_ulong mmap_find_vma_reserved(abi_ulong start, abi_ulong size,
         ret = page_find_range_empty(mmap_min_addr, start - 1, size, align);
     }
 
-    return ret;
+    return ret;/* 返回搜索到的可用的满足size的内存空间 */
 }
 
 /*
@@ -443,7 +443,7 @@ abi_ulong mmap_find_vma(abi_ulong start, abi_ulong size, abi_ulong align)
 
     align = MAX(align, host_page_size);
 
-    /* If 'start' == 0, then a default start address is used. */
+    /* If 'start' == 0, then a default start address is used. 为什么*/
     if (start == 0) {
         start = mmap_next_start;
     } else {
@@ -553,7 +553,7 @@ abi_ulong mmap_find_vma(abi_ulong start, abi_ulong size, abi_ulong align)
 
 /*
  * Record a successful mmap within the user-exec interval tree.
- */
+start和last的内存范围刚刚被分配用于映射了，这里进行后处理 */
 static abi_long mmap_end(abi_ulong start, abi_ulong last,
                          abi_ulong passthrough_start,
                          abi_ulong passthrough_last,
@@ -574,9 +574,9 @@ static abi_long mmap_end(abi_ulong start, abi_ulong last,
         if (passthrough_last < last) {
             page_set_flags(passthrough_last + 1, last, page_flags);
         }
-    }
+    }/* 刚刚是把范围加入全局的标记tree */
     shm_region_rm_complete(start, last);
-    trace_target_mmap_complete(start);
+    trace_target_mmap_complete(start);/* trace记录 */
     if (qemu_loglevel_mask(CPU_LOG_PAGE)) {
         FILE *f = qemu_log_trylock();
         if (f) {
@@ -603,7 +603,7 @@ static abi_long mmap_h_eq_g(abi_ulong start, abi_ulong len,
         want_p = g2h_untagged(start);
     }
 
-    p = mmap(want_p, len, host_prot, flags, fd, offset);
+    p = mmap(want_p, len, host_prot, flags, fd, offset);/*系统调用，映射到want-p开始的地方 */
     if (p == MAP_FAILED) {
         return -1;
     }
@@ -616,7 +616,7 @@ static abi_long mmap_h_eq_g(abi_ulong start, abi_ulong len,
 
     start = h2g(p);
     last = start + len - 1;
-    return mmap_end(start, last, start, last, flags, page_flags);
+    return mmap_end(start, last, start, last, flags, page_flags);/* 把范围标记为已分配 */
 }
 
 /*
@@ -910,7 +910,7 @@ static abi_long target_mmap__locked(abi_ulong start, abi_ulong len,
 
     /*
      * For reserved_va, we are in full control of the allocation.
-     * Find a suitable hole and convert to MAP_FIXED.
+     * Find a suitable hole and convert to MAP_FIXED. reserved—va可以理解为内存分配库？
      */
     if (reserved_va) {
         if (flags & MAP_FIXED_NOREPLACE) {
@@ -926,7 +926,7 @@ static abi_long target_mmap__locked(abi_ulong start, abi_ulong len,
             size_t real_len = len + offset - host_offset;
             abi_ulong align = MAX(host_page_size, TARGET_PAGE_SIZE);
 
-            start = mmap_find_vma(real_start, real_len, align);
+            start = mmap_find_vma(real_start, real_len, align);/* 搜索一段满足分配的内存 */
             if (start == (abi_ulong)-1) {
                 errno = ENOMEM;
                 return -1;
@@ -940,7 +940,7 @@ static abi_long target_mmap__locked(abi_ulong start, abi_ulong len,
 
     if (host_page_size == TARGET_PAGE_SIZE) {
         return mmap_h_eq_g(start, len, host_prot, flags,
-                           page_flags, fd, offset);
+                           page_flags, fd, offset); /* 分配内存，或者映射代码段 */
     } else if (host_page_size < TARGET_PAGE_SIZE) {
         return mmap_h_lt_g(start, len, host_prot, flags,
                            page_flags, fd, offset, host_page_size);
@@ -950,7 +950,7 @@ static abi_long target_mmap__locked(abi_ulong start, abi_ulong len,
     }
 }
 
-/* NOTE: all the constants are the HOST ones */
+/* NOTE: all the constants are the HOST ones ，给被执行的程序分配匿名内存？也可以拿来mmap映射，比如可以用来映射要执行的程序的代码段*/
 abi_long target_mmap(abi_ulong start, abi_ulong len, int target_prot,
                      int flags, int fd, off_t offset)
 {
@@ -995,7 +995,7 @@ abi_long target_mmap(abi_ulong start, abi_ulong len, int target_prot,
     mmap_lock();
 
     ret = target_mmap__locked(start, len, target_prot, flags,
-                              page_flags, fd, offset);
+                              page_flags, fd, offset); /* 分配匿名内存， 或者映射程序文件的代码段到内存 */
 
     mmap_unlock();
 

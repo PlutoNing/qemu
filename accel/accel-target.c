@@ -44,7 +44,7 @@ static const TypeInfo accel_type = {
 /* Lookup AccelClass from opt_name. Returns NULL if not found */
 AccelClass *accel_find(const char *opt_name)
 {
-    char *class_name = g_strdup_printf(ACCEL_CLASS_NAME("%s"), opt_name);
+    char *class_name = g_strdup_printf(ACCEL_CLASS_NAME("%s"), opt_name); /* 是tcg-accel */
     AccelClass *ac = ACCEL_CLASS(module_object_class_by_name(class_name));
     g_free(class_name);
     return ac;
@@ -89,7 +89,7 @@ static void accel_init_cpu_interfaces(AccelClass *ac)
     char *acc_name;      /* AccelCPUClass name */
     ObjectClass *acc;    /* AccelCPUClass */
 
-    ac_name = object_class_get_name(OBJECT_CLASS(ac));
+    ac_name = object_class_get_name(OBJECT_CLASS(ac));/* 是tcg-accel */
     g_assert(ac_name != NULL);
 
     acc_name = g_strdup_printf("%s-%s", ac_name, CPU_RESOLVING_TYPE);

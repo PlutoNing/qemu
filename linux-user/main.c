@@ -769,7 +769,7 @@ int main(int argc, char **argv, char **envp)
     memset(&bprm, 0, sizeof (bprm));
 
     /* Scan interp_prefix dir for replacement files. */
-    init_paths(interp_prefix);
+    init_paths(interp_prefix);/* interp_prefix是/usr/gnemul/qemu-arm */
 
     init_qemu_uname_release();
 
@@ -787,7 +787,7 @@ int main(int argc, char **argv, char **envp)
     }
 
     /* Resolve executable file name to full path name */
-    if (realpath(exec_path, real_exec_path)) {
+    if (realpath(exec_path, real_exec_path)) { /* exec_path是/home/paulning/study/baremetal/cross_arm/mainarm */
         exec_path = real_exec_path;
     }
 
@@ -806,9 +806,9 @@ int main(int argc, char **argv, char **envp)
     }
 
     if (cpu_model == NULL) {
-        cpu_model = cpu_get_model(get_elf_eflags(execfd));
+        cpu_model = cpu_get_model(get_elf_eflags(execfd)); /* 是any */
     }
-    cpu_type = parse_cpu_option(cpu_model);
+    cpu_type = parse_cpu_option(cpu_model); /* 是max-arm-cpu */
 
     /* init tcg before creating CPUs */
     {
@@ -820,7 +820,7 @@ int main(int argc, char **argv, char **envp)
                                  opt_one_insn_per_tb, &error_abort);
         object_property_set_int(OBJECT(accel), "tb-size",
                                 opt_tb_size, &error_abort);
-        ac->init_machine(NULL);
+        ac->init_machine(NULL);/* 初始化ac ， ac是tcg */
     }
 
     /*
@@ -1042,7 +1042,7 @@ int main(int argc, char **argv, char **envp)
     qemu_semihosting_guestfd_init();
 #endif
 
-    cpu_loop(env);
+    cpu_loop(env);/* 开始执行了？ */
     /* never exits */
     return 0;
 }

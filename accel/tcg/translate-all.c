@@ -277,7 +277,7 @@ static int setjmp_gen_code(CPUArchState *env, TranslationBlock *tb,
 
     CPUState *cs = env_cpu(env);
     tcg_ctx->cpu = cs;
-    cs->cc->tcg_ops->translate_code(cs, tb, max_insns, pc, host_pc);
+    cs->cc->tcg_ops->translate_code(cs, tb, max_insns, pc, host_pc);/* 翻译代码 */
 
     assert(tb->size != 0);
     tcg_ctx->cpu = NULL;
@@ -317,7 +317,7 @@ TranslationBlock *tb_gen_code(CPUState *cpu,
 
  buffer_overflow:
     assert_no_pages_locked();
-    tb = tcg_tb_alloc(tcg_ctx);
+    tb = tcg_tb_alloc(tcg_ctx);/* 把tcg ctx当前的code-gen-ptr作为tcg的buf */
     if (unlikely(!tb)) {
         /* flush must be done */
         tb_flush(cpu);

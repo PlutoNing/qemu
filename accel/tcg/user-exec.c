@@ -242,7 +242,7 @@ int page_get_flags(target_ulong address)
     return p ? p->flags : 0;
 }
 
-/* A subroutine of page_set_flags: insert a new node for [start,last]. */
+/* A subroutine of page_set_flags: insert a new node for [start,last]. 把start和end插入tree */
 static void pageflags_create(target_ulong start, target_ulong last, int flags)
 {
     PageFlagsNode *p = g_new(PageFlagsNode, 1);
@@ -253,13 +253,13 @@ static void pageflags_create(target_ulong start, target_ulong last, int flags)
     interval_tree_insert(&p->itree, &pageflags_root);
 }
 
-/* A subroutine of page_set_flags: remove everything in [start,last]. */
+/* A subroutine of page_set_flags: remove everything in [start,last]. 把范围从tree移除 */
 static bool pageflags_unset(target_ulong start, target_ulong last)
 {
     bool inval_tb = false;
 
     while (true) {
-        PageFlagsNode *p = pageflags_find(start, last);
+        PageFlagsNode *p = pageflags_find(start, last);/* 找到范围在pageflags tree上面的节点 */
         target_ulong p_last;
 
         if (!p) {
@@ -295,7 +295,7 @@ static bool pageflags_unset(target_ulong start, target_ulong last)
     return inval_tb;
 }
 
-/*
+/* start和end可能是一个page的范围
  * A subroutine of page_set_flags: nothing overlaps [start,last],
  * but check adjacent mappings and maybe merge into a single range.
  */
@@ -336,8 +336,8 @@ static void pageflags_create_merge(target_ulong start, target_ulong last,
     } else if (next) {
         next->itree.start = start;
         interval_tree_insert(&next->itree, &pageflags_root);
-    } else {
-        pageflags_create(start, last, flags);
+    } else {/* 一种情况是查的start和end都为0 */
+        pageflags_create(start, last, flags);/* 把范围插入全局的标记tree */
     }
 }
 
@@ -350,7 +350,7 @@ static void pageflags_create_merge(target_ulong start, target_ulong last,
 #endif
 #define PAGE_STICKY  (PAGE_ANON | PAGE_PASSTHROUGH | PAGE_TARGET_STICKY)
 
-/* A subroutine of page_set_flags: add flags to [start,last]. */
+/* A subroutine of page_set_flags: add flags to [start,last]. 把范围插入全局的标记tree */
 static bool pageflags_set_clear(target_ulong start, target_ulong last,
                                 int set_flags, int clear_flags)
 {
@@ -362,8 +362,8 @@ static bool pageflags_set_clear(target_ulong start, target_ulong last,
  restart:
     p = pageflags_find(start, last);
     if (!p) {
-        if (set_flags) {
-            pageflags_create_merge(start, last, set_flags);
+        if (set_flags) {/* 把范围插入tree */
+            pageflags_create_merge(start, last, set_flags);/* 好像是把范围加入pageflags tree */
         }
         goto done;
     }
@@ -519,11 +519,11 @@ void page_set_flags(target_ulong start, target_ulong last, int flags)
 
     if (!flags || reset) {
         page_reset_target_data(start, last);
-        inval_tb |= pageflags_unset(start, last);
+        inval_tb |= pageflags_unset(start, last);/* 把范围从tree移除，类似一个解除标记的作用 */
     }
     if (flags) {
         inval_tb |= pageflags_set_clear(start, last, flags,
-                                        ~(reset ? 0 : PAGE_STICKY));
+                                        ~(reset ? 0 : PAGE_STICKY)); /* 把范围加入全局的tree，似是标记为已分配 */
     }
     if (inval_tb) {
         tb_invalidate_phys_range(start, last);
@@ -642,17 +642,17 @@ target_ulong page_find_range_empty(target_ulong min, target_ulong max,
             return -1;
         }
 
-        p = pageflags_find(min, min + len_m1);
-        if (p == NULL) {
+        p = pageflags_find(min, min + len_m1);/* 搜索一次，看看这次搜索的空间有没有被使用 */
+        if (p == NULL) {/* 没有被使用 */
             /* Found! */
-            return min;
+            return min;/* 找到了空闲空间 */
         }
         if (max <= p->itree.last) {
             /* Existing allocation fills the remainder of the search region. */
             return -1;
         }
         /* Skip across existing allocation. */
-        min = p->itree.last + 1;
+        min = p->itree.last + 1;/* 调整空间继续搜索？ */
     }
 }
 

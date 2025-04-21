@@ -504,7 +504,7 @@ struct CPUState {
     AddressSpace *as;
     MemoryRegion *memory;
 
-    struct CPUJumpCache *tb_jmp_cache;
+    struct CPUJumpCache *tb_jmp_cache;/* 似乎是存储已翻译代码块的hash缓存 */
 
     GArray *gdb_regs;
     int gdb_num_regs;

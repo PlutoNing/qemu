@@ -42,7 +42,7 @@ struct image_info {
         abi_ulong       argv;
         abi_ulong       envc;
         abi_ulong       envp;
-        abi_ulong       file_string;
+        abi_ulong       file_string;/* 要执行的文件名 */
         uint32_t        elf_flags;
         int             personality;
         bool            exec_stack;

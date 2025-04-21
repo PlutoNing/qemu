@@ -1562,7 +1562,7 @@ void tcg_init(size_t tb_size, int splitwx, unsigned max_cpus)
 
 /*
  * Allocate TBs right before their corresponding translated code, making
- * sure that TBs and code are on different cache lines.
+ * sure that TBs and code are on different cache lines. 把tcg ctx当前的code gen ptr用作tb的buf，然后code gen ptr后移，供下次作为tb
  */
 TranslationBlock *tcg_tb_alloc(TCGContext *s)
 {

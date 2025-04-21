@@ -206,7 +206,7 @@ static TranslationBlock *tb_htable_lookup(CPUState *cpu, vaddr pc,
     desc.flags = flags;
     desc.cflags = cflags;
     desc.pc = pc;
-    phys_pc = get_page_addr_code(desc.env, pc);
+    phys_pc = get_page_addr_code(desc.env, pc);/* 这次phys pc和pc居然是一样的 */
     if (phys_pc == -1) {
         return NULL;
     }
@@ -241,7 +241,7 @@ static inline TranslationBlock *tb_lookup(CPUState *cpu, vaddr pc,
     /* we should never be trying to look up an INVALID tb */
     tcg_debug_assert(!(cflags & CF_INVALID));
 
-    hash = tb_jmp_cache_hash_func(pc);
+    hash = tb_jmp_cache_hash_func(pc);/* 查找pc有没有已经翻译好， 通过pc的hash来索引的已翻译代码块 */
     jc = cpu->tb_jmp_cache;
 
     tb = qatomic_read(&jc->array[hash].tb);
@@ -250,12 +250,12 @@ static inline TranslationBlock *tb_lookup(CPUState *cpu, vaddr pc,
                tb->cs_base == cs_base &&
                tb->flags == flags &&
                tb_cflags(tb) == cflags)) {
-        goto hit;
+        goto hit;/* 在缓存查到了已翻译代码块 */
     }
 
     tb = tb_htable_lookup(cpu, pc, cs_base, flags, cflags);
     if (tb == NULL) {
-        return NULL;
+        return NULL;/* 有时候有可能这里也没查到tb */
     }
 
     jc->array[hash].pc = pc;
@@ -952,7 +952,7 @@ cpu_exec_loop(CPUState *cpu, SyncClocks *sc)
         TranslationBlock *last_tb = NULL;
         int tb_exit = 0;
 
-        while (!cpu_handle_interrupt(cpu, &last_tb)) {
+        while (!cpu_handle_interrupt(cpu, &last_tb)) {/* 看来是每次执行后都会检查一下中断异常什么的 */
             TranslationBlock *tb;
             vaddr pc;
             uint64_t cs_base;
@@ -978,13 +978,13 @@ cpu_exec_loop(CPUState *cpu, SyncClocks *sc)
                 break;
             }
 
-            tb = tb_lookup(cpu, pc, cs_base, flags, cflags);
-            if (tb == NULL) {
+            tb = tb_lookup(cpu, pc, cs_base, flags, cflags);/* pc啥时候初始化的呢 */
+            if (tb == NULL) {/* 没有在缓存查到tb */
                 CPUJumpCache *jc;
                 uint32_t h;
 
                 mmap_lock();
-                tb = tb_gen_code(cpu, pc, cs_base, flags, cflags);
+                tb = tb_gen_code(cpu, pc, cs_base, flags, cflags);/* 这里生成tb */
                 mmap_unlock();
 
                 /*
@@ -1030,7 +1030,7 @@ static int cpu_exec_setjmp(CPUState *cpu, SyncClocks *sc)
         cpu_exec_longjmp_cleanup(cpu);
     }
 
-    return cpu_exec_loop(cpu, sc);
+    return cpu_exec_loop(cpu, sc);/* 开始执行 */
 }
 
 int cpu_exec(CPUState *cpu)
@@ -1056,7 +1056,7 @@ int cpu_exec(CPUState *cpu)
      */
     init_delay_params(&sc, cpu);
 
-    ret = cpu_exec_setjmp(cpu, &sc);
+    ret = cpu_exec_setjmp(cpu, &sc);/* 真正的开始执行？ */
 
     cpu_exec_exit(cpu);
     return ret;

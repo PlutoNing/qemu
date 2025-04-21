@@ -52,7 +52,7 @@ bool cpu_exists(int64_t id)
     return !!cpu_by_arch_id(id);
 }
 
-CPUState *cpu_create(const char *typename)
+CPUState *cpu_create(const char *typename)/* typename是max arm cpu */
 {
     Error *err = NULL;
     CPUState *cpu = CPU(object_new(typename));

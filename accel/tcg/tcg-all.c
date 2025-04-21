@@ -85,7 +85,7 @@ static bool default_mttcg_enabled(void)
     return false;
 #endif
 }
-
+/* tcg-accel的ti的obj的init instance函数 */
 static void tcg_accel_instance_init(Object *obj)
 {
     TCGState *s = TCG_STATE(obj);
@@ -102,7 +102,7 @@ static void tcg_accel_instance_init(Object *obj)
 
 bool mttcg_enabled;
 bool one_insn_per_tb;
-
+/* 初始化tcg的ac的machine的函数 */
 static int tcg_init_machine(MachineState *ms)
 {
     TCGState *s = TCG_STATE(current_accel());

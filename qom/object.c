@@ -68,7 +68,7 @@ struct TypeImpl
     const char *parent;
     TypeImpl *parent_type;
 
-    ObjectClass *class;
+    ObjectClass *class; /* 是对应type的class */
 
     int num_interfaces;
     InterfaceImpl interfaces[MAX_INTERFACES];
@@ -97,7 +97,7 @@ static void type_table_add(TypeImpl *ti)
 
 static TypeImpl *type_table_lookup(const char *name)
 {
-    return g_hash_table_lookup(type_table_get(), name);
+    return g_hash_table_lookup(type_table_get(), name); /* name是tcg-accel */
 }
 
 static TypeImpl *type_new(const TypeInfo *info)
@@ -218,7 +218,7 @@ static TypeImpl *type_get_or_load_by_name(const char *name, Error **errp)
         error_setg(errp, "unknown type '%s'", name);
     }
 
-    return type;
+    return type; /*  */
 }
 
 static TypeImpl *type_get_parent(TypeImpl *type)
@@ -361,7 +361,7 @@ static void type_initialize(TypeImpl *ti)
     ti->class = g_malloc0(ti->class_size);
 
     parent = type_get_parent(ti);
-    if (parent) {
+    if (parent) {/* tcg-accel的parent.name是accel， accel的parent是object */
         type_initialize(parent);
         GSList *e;
         int i;
@@ -539,7 +539,7 @@ void object_apply_compat_props(Object *obj)
                                   i == 2 ? &error_fatal : &error_abort);
     }
 }
-
+/* 一个一个的初始化obj的prop， 比如tb-size什么的 */
 static void object_class_property_init_all(Object *obj)
 {
     ObjectPropertyIterator iter;
@@ -552,7 +552,7 @@ static void object_class_property_init_all(Object *obj)
         }
     }
 }
-
+/* 初始化type类型的新obj */
 static void object_initialize_with_type(Object *obj, size_t size, TypeImpl *type)
 {
     type_initialize(type);
@@ -1074,7 +1074,7 @@ ObjectClass *module_object_class_by_name(const char *typename)
         return NULL;
     }
 
-    type_initialize(type);
+    type_initialize(type);/* type.name = tcg-accel */
 
     return type->class;
 }

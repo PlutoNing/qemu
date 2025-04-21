@@ -11460,7 +11460,7 @@ void cpu_get_tb_cpu_state(CPUARMState *env, vaddr *pc,
             DP_TBFLAG_A64(flags, BTYPE, env->btype);
         }
     } else {
-        *pc = env->regs[15];
+        *pc = env->regs[15];/* r15一般是pc */
 
         if (arm_feature(env, ARM_FEATURE_M)) {
             if (arm_feature(env, ARM_FEATURE_M_SECURITY) &&
